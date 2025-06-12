@@ -52,9 +52,13 @@ client.on('messageCreate', async (message) => {
 
     logger.log(`📝 New message from ${message.author.tag} in source channel`);
 
-    // Send the original message content
+    // Send the original message content with attachments
     const response = await message.channel.send({
         content: message.content,
+        files: message.attachments.map(attachment => ({
+            attachment: attachment.url,
+            name: attachment.name
+        })),
         components: [createButtons()]
     });
 
@@ -92,8 +96,14 @@ client.on('messageCreate', async (message) => {
                 return;
             }
 
-            // Send the announcement as plain text
-            await announceChannel.send(message.content);
+            // Send the announcement with attachments
+            await announceChannel.send({
+                content: message.content,
+                files: message.attachments.map(attachment => ({
+                    attachment: attachment.url,
+                    name: attachment.name
+                }))
+            });
             logger.log(`📢 Announcement posted by ${interaction.user.tag}`);
             await interaction.reply({
                 content: 'Announcement has been posted!',
