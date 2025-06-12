@@ -42,20 +42,26 @@ const createButtons = () => {
         .addComponents(announceButton, cancelButton);
 };
 
-// Function to format emojis in custom format
-function formatCustomEmojis(content) {
-    // Match both animated and static emojis
-    return content.replace(/:([a-zA-Z0-9_]+):/g, (match, name) => {
-        // Find the emoji in the client's emoji cache
-        const emoji = client.emojis.cache.find(e => e.name === name);
-        if (emoji) {
-            // Format based on whether it's animated or not
-            return emoji.animated 
-                ? `<a:${name}:${emoji.id}>` 
-                : `<:${name}:${emoji.id}>`;
-        }
-        return match; // Return original if emoji not found
+// Function to get raw emoji format
+function getRawEmojiFormat(message) {
+    // Get the raw content from the message
+    const rawContent = message.content;
+    
+    // If the message already contains the custom format, return it as is
+    if (rawContent.includes('<:') || rawContent.includes('<a:')) {
+        return rawContent;
+    }
+
+    // Otherwise, try to get the emoji format from the message's emojis
+    let formattedContent = rawContent;
+    message.emojis.forEach(emoji => {
+        const emojiFormat = emoji.animated 
+            ? `<a:${emoji.name}:${emoji.id}>`
+            : `<:${emoji.name}:${emoji.id}>`;
+        formattedContent = formattedContent.replace(`:${emoji.name}:`, emojiFormat);
     });
+
+    return formattedContent;
 }
 
 // Handle message events
@@ -68,8 +74,8 @@ client.on('messageCreate', async (message) => {
 
     logger.log(`📝 New message from ${message.author.tag} in source channel`);
 
-    // Format the message content with custom emoji format
-    const formattedContent = formatCustomEmojis(message.content);
+    // Get the formatted content with proper emoji format
+    const formattedContent = getRawEmojiFormat(message);
 
     // Send the original message content with attachments
     const response = await message.channel.send({
