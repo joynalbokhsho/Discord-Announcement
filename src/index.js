@@ -2,6 +2,7 @@ require('dotenv').config();
 const { Client, GatewayIntentBits, Partials, ButtonBuilder, ButtonStyle, ActionRowBuilder, EmbedBuilder } = require('discord.js');
 const yaml = require('js-yaml');
 const fs = require('fs');
+const logger = require('./logger');
 
 // Load configuration
 const config = yaml.load(fs.readFileSync('./config.yml', 'utf8'));
@@ -19,10 +20,10 @@ const client = new Client({
 
 // Bot ready event
 client.once('ready', () => {
-    console.log(`✅ Bot is ready! Logged in as ${client.user.tag}`);
-    console.log(`👀 Watching channel: ${config.sourceChannelId}`);
-    console.log(`📢 Announcement channel: ${config.announceChannelId}`);
-    console.log(`🔑 Required role: ${config.allowedRoleId}`);
+    logger.log(`✅ Bot is ready! Logged in as ${client.user.tag}`);
+    logger.log(`👀 Watching channel: ${config.sourceChannelId}`);
+    logger.log(`📢 Announcement channel: ${config.announceChannelId}`);
+    logger.log(`🔑 Required role: ${config.allowedRoleId}`);
 });
 
 // Create buttons
@@ -49,7 +50,7 @@ client.on('messageCreate', async (message) => {
     // Ignore bot messages
     if (message.author.bot) return;
 
-    console.log(`📝 New message from ${message.author.tag} in source channel`);
+    logger.log(`📝 New message from ${message.author.tag} in source channel`);
 
     // Send the original message content
     const response = await message.channel.send({
@@ -57,7 +58,7 @@ client.on('messageCreate', async (message) => {
         components: [createButtons()]
     });
 
-    console.log(`✅ Added announcement buttons to message`);
+    logger.log(`✅ Added announcement buttons to message`);
 
     // Create collector for button interactions
     const collector = response.createMessageComponentCollector({
@@ -65,14 +66,14 @@ client.on('messageCreate', async (message) => {
     });
 
     collector.on('collect', async (interaction) => {
-        console.log(`🔘 Button clicked by ${interaction.user.tag}: ${interaction.customId}`);
+        logger.log(`🔘 Button clicked by ${interaction.user.tag}: ${interaction.customId}`);
         
         // Check if user has the required role
         const hasRole = interaction.member.roles.cache.has(config.allowedRoleId);
 
         if (interaction.customId === 'announce') {
             if (!hasRole) {
-                console.log(`❌ User ${interaction.user.tag} attempted to announce without permission`);
+                logger.log(`❌ User ${interaction.user.tag} attempted to announce without permission`);
                 await interaction.reply({
                     content: 'You do not have permission to use the Announce button.',
                     ephemeral: true
@@ -83,7 +84,7 @@ client.on('messageCreate', async (message) => {
             // Get the announcement channel
             const announceChannel = await client.channels.fetch(config.announceChannelId);
             if (!announceChannel) {
-                console.log(`❌ Announcement channel not found: ${config.announceChannelId}`);
+                logger.error(`Announcement channel not found: ${config.announceChannelId}`);
                 await interaction.reply({
                     content: 'Error: Announcement channel not found.',
                     ephemeral: true
@@ -93,7 +94,7 @@ client.on('messageCreate', async (message) => {
 
             // Send the announcement as plain text
             await announceChannel.send(message.content);
-            console.log(`📢 Announcement posted by ${interaction.user.tag}`);
+            logger.log(`📢 Announcement posted by ${interaction.user.tag}`);
             await interaction.reply({
                 content: 'Announcement has been posted!',
                 ephemeral: true
@@ -112,7 +113,7 @@ client.on('messageCreate', async (message) => {
         await interaction.message.edit({
             components: [disabledRow]
         });
-        console.log(`🔒 Buttons disabled for message`);
+        logger.log(`🔒 Buttons disabled for message`);
     });
 
     collector.on('end', () => {
@@ -127,21 +128,21 @@ client.on('messageCreate', async (message) => {
 
         response.edit({
             components: [disabledRow]
-        }).catch(console.error);
-        console.log(`⏰ Buttons timed out and disabled`);
+        }).catch(error => logger.error(`Failed to disable buttons: ${error.message}`));
+        logger.log(`⏰ Buttons timed out and disabled`);
     });
 });
 
 // Error handling
 client.on('error', error => {
-    console.error('❌ Discord client error:', error);
+    logger.error(`Discord client error: ${error.message}`);
 });
 
 process.on('unhandledRejection', error => {
-    console.error('❌ Unhandled promise rejection:', error);
+    logger.error(`Unhandled promise rejection: ${error.message}`);
 });
 
 // Login to Discord
 client.login(process.env.BOT_TOKEN)
-    .then(() => console.log('🔑 Bot token validated'))
-    .catch(error => console.error('❌ Failed to login:', error)); 
+    .then(() => logger.log('🔑 Bot token validated'))
+    .catch(error => logger.error(`Failed to login: ${error.message}`)); 
