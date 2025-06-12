@@ -41,19 +41,9 @@ client.on('messageCreate', async (message) => {
     // Ignore bot messages
     if (message.author.bot) return;
 
-    // Create embed with the original message
-    const embed = new EmbedBuilder()
-        .setColor('#0099ff')
-        .setAuthor({ 
-            name: message.author.tag, 
-            iconURL: message.author.displayAvatarURL() 
-        })
-        .setDescription(message.content)
-        .setTimestamp();
-
-    // Send the message with buttons
+    // Send the original message content
     const response = await message.channel.send({
-        embeds: [embed],
+        content: message.content,
         components: [createButtons()]
     });
 
@@ -85,8 +75,8 @@ client.on('messageCreate', async (message) => {
                 return;
             }
 
-            // Send the announcement
-            await announceChannel.send({ embeds: [embed] });
+            // Send the announcement as plain text
+            await announceChannel.send(message.content);
             await interaction.reply({
                 content: 'Announcement has been posted!',
                 ephemeral: true
