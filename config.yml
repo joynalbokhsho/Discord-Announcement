@@ -1,0 +1,11 @@
+# Discord Bot Configuration
+
+# Channel IDs
+sourceChannelId: "" # ID of the channel where staff post messages
+announceChannelId: "" # ID of the channel where announcements will be posted
+
+# Role IDs
+allowedRoleId: "" # Role ID required to use the Announce button
+
+# Bot Settings
+prefix: "!" # Bot command prefix (if needed) 
