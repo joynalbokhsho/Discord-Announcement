@@ -7,7 +7,6 @@ A Discord bot that helps manage announcements with role-based permissions and in
 - Detects messages in a specific channel
 - Responds with interactive buttons (Announce/Cancel)
 - Role-based permission system for announcements
-- Automatic button timeout after 5 minutes
 - Clean embed formatting for announcements
 
 ## Setup
@@ -54,7 +53,7 @@ allowedRoleId: "" # Role required to use the Announce button
 2. The bot will respond with your message and two buttons:
    - Announce: Posts the message to the announcement channel (requires specified role)
    - Cancel: Disables the buttons without taking action
-3. Buttons will automatically disable after 5 minutes
+3. Buttons will remain active until used
 
 ## Requirements
 

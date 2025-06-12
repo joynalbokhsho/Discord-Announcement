@@ -66,7 +66,7 @@ client.on('messageCreate', async (message) => {
 
     // Create collector for button interactions
     const collector = response.createMessageComponentCollector({
-        time: 300000 // 5 minutes
+        time: 0 // Infinite timeout
     });
 
     collector.on('collect', async (interaction) => {
