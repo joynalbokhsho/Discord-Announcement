@@ -79,16 +79,16 @@ client.on('messageCreate', async (message) => {
             // Check if user has the required role
             const hasRole = interaction.member.roles.cache.has(config.allowedRoleId);
 
-            if (interaction.customId === 'announce') {
-                if (!hasRole) {
-                    logger.log(`❌ User ${interaction.user.tag} attempted to announce without permission`);
-                    await interaction.editReply({
-                        content: 'You do not have permission to use the Announce button.',
-                        ephemeral: true
-                    });
-                    return;
-                }
+            if (!hasRole) {
+                logger.log(`❌ User ${interaction.user.tag} attempted to use buttons without permission`);
+                await interaction.editReply({
+                    content: 'You do not have permission to use these buttons.',
+                    ephemeral: true
+                });
+                return;
+            }
 
+            if (interaction.customId === 'announce') {
                 // Get the announcement channel
                 const announceChannel = await client.channels.fetch(config.announceChannelId);
                 if (!announceChannel) {
