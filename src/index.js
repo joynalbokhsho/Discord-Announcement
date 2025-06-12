@@ -42,28 +42,6 @@ const createButtons = () => {
         .addComponents(announceButton, cancelButton);
 };
 
-// Function to get raw emoji format
-function getRawEmojiFormat(message) {
-    // Get the raw content from the message
-    const rawContent = message.content;
-    
-    // If the message already contains the custom format, return it as is
-    if (rawContent.includes('<:') || rawContent.includes('<a:')) {
-        return rawContent;
-    }
-
-    // Otherwise, try to get the emoji format from the message's emojis
-    let formattedContent = rawContent;
-    message.emojis.forEach(emoji => {
-        const emojiFormat = emoji.animated 
-            ? `<a:${emoji.name}:${emoji.id}>`
-            : `<:${emoji.name}:${emoji.id}>`;
-        formattedContent = formattedContent.replace(`:${emoji.name}:`, emojiFormat);
-    });
-
-    return formattedContent;
-}
-
 // Handle message events
 client.on('messageCreate', async (message) => {
     // Check if message is from the source channel
@@ -74,12 +52,9 @@ client.on('messageCreate', async (message) => {
 
     logger.log(`📝 New message from ${message.author.tag} in source channel`);
 
-    // Get the formatted content with proper emoji format
-    const formattedContent = getRawEmojiFormat(message);
-
     // Send the original message content with attachments
     const response = await message.channel.send({
-        content: formattedContent,
+        content: message.content,
         files: message.attachments.map(attachment => ({
             attachment: attachment.url,
             name: attachment.name
@@ -127,7 +102,7 @@ client.on('messageCreate', async (message) => {
 
                 // Send the announcement with attachments
                 await announceChannel.send({
-                    content: formattedContent,
+                    content: message.content,
                     files: message.attachments.map(attachment => ({
                         attachment: attachment.url,
                         name: attachment.name
