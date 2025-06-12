@@ -42,11 +42,10 @@ const createButtons = () => {
         .addComponents(announceButton, cancelButton);
 };
 
-// Function to convert emoji names to raw format
-function convertEmojis(content) {
-    return content.replace(/<a?:([a-zA-Z0-9_]+):(\d+)>/g, (match, name, id) => {
-        return `<${match.startsWith('<a:') ? 'a:' : ''}${name}:${id}>`;
-    });
+// Function to preserve emoji format
+function preserveEmojiFormat(content) {
+    // This function just returns the content as is, since Discord.js already handles the emoji format correctly
+    return content;
 }
 
 // Handle message events
@@ -59,12 +58,12 @@ client.on('messageCreate', async (message) => {
 
     logger.log(`📝 New message from ${message.author.tag} in source channel`);
 
-    // Convert emojis to raw format
-    const processedContent = convertEmojis(message.content);
+    // Preserve the original message content with emojis
+    const messageContent = preserveEmojiFormat(message.content);
 
     // Send the original message content with attachments
     const response = await message.channel.send({
-        content: processedContent,
+        content: messageContent,
         files: message.attachments.map(attachment => ({
             attachment: attachment.url,
             name: attachment.name
@@ -112,7 +111,7 @@ client.on('messageCreate', async (message) => {
 
                 // Send the announcement with attachments and preserved emojis
                 await announceChannel.send({
-                    content: processedContent,
+                    content: messageContent,
                     files: message.attachments.map(attachment => ({
                         attachment: attachment.url,
                         name: attachment.name
