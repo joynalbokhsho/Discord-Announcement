@@ -42,10 +42,17 @@ const createButtons = () => {
         .addComponents(announceButton, cancelButton);
 };
 
-// Function to preserve emoji format
-function preserveEmojiFormat(content) {
-    // This function just returns the content as is, since Discord.js already handles the emoji format correctly
-    return content;
+// Function to format emojis correctly
+function formatEmojis(content) {
+    // Replace :emoji_name: with <:emoji_name:emoji_id> or <a:emoji_name:emoji_id>
+    return content.replace(/:([a-zA-Z0-9_]+):/g, (match, name) => {
+        // Find the emoji in the message's emojis
+        const emoji = client.emojis.cache.find(e => e.name === name);
+        if (emoji) {
+            return emoji.animated ? `<a:${name}:${emoji.id}>` : `<:${name}:${emoji.id}>`;
+        }
+        return match; // Return original if emoji not found
+    });
 }
 
 // Handle message events
@@ -58,8 +65,8 @@ client.on('messageCreate', async (message) => {
 
     logger.log(`📝 New message from ${message.author.tag} in source channel`);
 
-    // Preserve the original message content with emojis
-    const messageContent = preserveEmojiFormat(message.content);
+    // Format the message content with proper emoji format
+    const messageContent = formatEmojis(message.content);
 
     // Send the original message content with attachments
     const response = await message.channel.send({
