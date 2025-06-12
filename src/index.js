@@ -70,60 +70,75 @@ client.on('messageCreate', async (message) => {
     });
 
     collector.on('collect', async (interaction) => {
-        logger.log(`🔘 Button clicked by ${interaction.user.tag}: ${interaction.customId}`);
-        
-        // Check if user has the required role
-        const hasRole = interaction.member.roles.cache.has(config.allowedRoleId);
+        try {
+            // Defer the reply to prevent interaction timeout
+            await interaction.deferReply({ ephemeral: true });
+            
+            logger.log(`🔘 Button clicked by ${interaction.user.tag}: ${interaction.customId}`);
+            
+            // Check if user has the required role
+            const hasRole = interaction.member.roles.cache.has(config.allowedRoleId);
 
-        if (interaction.customId === 'announce') {
-            if (!hasRole) {
-                logger.log(`❌ User ${interaction.user.tag} attempted to announce without permission`);
-                await interaction.reply({
-                    content: 'You do not have permission to use the Announce button.',
+            if (interaction.customId === 'announce') {
+                if (!hasRole) {
+                    logger.log(`❌ User ${interaction.user.tag} attempted to announce without permission`);
+                    await interaction.editReply({
+                        content: 'You do not have permission to use the Announce button.',
+                        ephemeral: true
+                    });
+                    return;
+                }
+
+                // Get the announcement channel
+                const announceChannel = await client.channels.fetch(config.announceChannelId);
+                if (!announceChannel) {
+                    logger.error(`Announcement channel not found: ${config.announceChannelId}`);
+                    await interaction.editReply({
+                        content: 'Error: Announcement channel not found.',
+                        ephemeral: true
+                    });
+                    return;
+                }
+
+                // Send the announcement with attachments
+                await announceChannel.send({
+                    content: message.content,
+                    files: message.attachments.map(attachment => ({
+                        attachment: attachment.url,
+                        name: attachment.name
+                    }))
+                });
+                logger.log(`📢 Announcement posted by ${interaction.user.tag}`);
+                await interaction.editReply({
+                    content: 'Announcement has been posted!',
                     ephemeral: true
                 });
-                return;
             }
 
-            // Get the announcement channel
-            const announceChannel = await client.channels.fetch(config.announceChannelId);
-            if (!announceChannel) {
-                logger.error(`Announcement channel not found: ${config.announceChannelId}`);
-                await interaction.reply({
-                    content: 'Error: Announcement channel not found.',
+            // Disable buttons after use
+            const disabledRow = new ActionRowBuilder()
+                .addComponents(
+                    ButtonBuilder.from(interaction.message.components[0].components[0])
+                        .setDisabled(true),
+                    ButtonBuilder.from(interaction.message.components[0].components[1])
+                        .setDisabled(true)
+                );
+
+            await interaction.message.edit({
+                components: [disabledRow]
+            });
+            logger.log(`🔒 Buttons disabled for message`);
+        } catch (error) {
+            logger.error(`Error handling interaction: ${error.message}`);
+            try {
+                await interaction.editReply({
+                    content: 'An error occurred while processing your request.',
                     ephemeral: true
                 });
-                return;
+            } catch (e) {
+                logger.error(`Failed to send error message: ${e.message}`);
             }
-
-            // Send the announcement with attachments
-            await announceChannel.send({
-                content: message.content,
-                files: message.attachments.map(attachment => ({
-                    attachment: attachment.url,
-                    name: attachment.name
-                }))
-            });
-            logger.log(`📢 Announcement posted by ${interaction.user.tag}`);
-            await interaction.reply({
-                content: 'Announcement has been posted!',
-                ephemeral: true
-            });
         }
-
-        // Disable buttons after use
-        const disabledRow = new ActionRowBuilder()
-            .addComponents(
-                ButtonBuilder.from(interaction.message.components[0].components[0])
-                    .setDisabled(true),
-                ButtonBuilder.from(interaction.message.components[0].components[1])
-                    .setDisabled(true)
-            );
-
-        await interaction.message.edit({
-            components: [disabledRow]
-        });
-        logger.log(`🔒 Buttons disabled for message`);
     });
 
     collector.on('end', () => {
