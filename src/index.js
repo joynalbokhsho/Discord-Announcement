@@ -52,9 +52,12 @@ client.on('messageCreate', async (message) => {
 
     logger.log(`📝 New message from ${message.author.tag} in source channel`);
 
+    // Get the raw content to preserve emojis
+    const rawContent = message.content;
+
     // Send the original message content with attachments
     const response = await message.channel.send({
-        content: message.content,
+        content: rawContent,
         files: message.attachments.map(attachment => ({
             attachment: attachment.url,
             name: attachment.name
@@ -100,9 +103,9 @@ client.on('messageCreate', async (message) => {
                     return;
                 }
 
-                // Send the announcement with attachments
+                // Send the announcement with attachments and preserved emojis
                 await announceChannel.send({
-                    content: message.content,
+                    content: rawContent,
                     files: message.attachments.map(attachment => ({
                         attachment: attachment.url,
                         name: attachment.name
