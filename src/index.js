@@ -42,6 +42,22 @@ const createButtons = () => {
         .addComponents(announceButton, cancelButton);
 };
 
+// Function to format emojis in custom format
+function formatCustomEmojis(content) {
+    // Match both animated and static emojis
+    return content.replace(/:([a-zA-Z0-9_]+):/g, (match, name) => {
+        // Find the emoji in the client's emoji cache
+        const emoji = client.emojis.cache.find(e => e.name === name);
+        if (emoji) {
+            // Format based on whether it's animated or not
+            return emoji.animated 
+                ? `<a:${name}:${emoji.id}>` 
+                : `<:${name}:${emoji.id}>`;
+        }
+        return match; // Return original if emoji not found
+    });
+}
+
 // Handle message events
 client.on('messageCreate', async (message) => {
     // Check if message is from the source channel
@@ -52,12 +68,12 @@ client.on('messageCreate', async (message) => {
 
     logger.log(`📝 New message from ${message.author.tag} in source channel`);
 
-    // Get the raw message content
-    const rawContent = message.content;
+    // Format the message content with custom emoji format
+    const formattedContent = formatCustomEmojis(message.content);
 
     // Send the original message content with attachments
     const response = await message.channel.send({
-        content: rawContent,
+        content: formattedContent,
         files: message.attachments.map(attachment => ({
             attachment: attachment.url,
             name: attachment.name
@@ -105,7 +121,7 @@ client.on('messageCreate', async (message) => {
 
                 // Send the announcement with attachments
                 await announceChannel.send({
-                    content: rawContent,
+                    content: formattedContent,
                     files: message.attachments.map(attachment => ({
                         attachment: attachment.url,
                         name: attachment.name
